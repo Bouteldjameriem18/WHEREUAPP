@@ -1,31 +1,35 @@
-import 'package:location/location.dart';
 import 'package:projet_2cp/classes/Groupe.dart';
 import 'package:projet_2cp/classes/Historique.dart';
 import 'package:projet_2cp/servises/auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:geolocator/geolocator.dart';
 class Utilisateur {
   //************************************* Attributs ***************************************************//
-  String _id;
+  String _id; //Try to make it final
   //String _username;
   String _email;
   String _password;
   String _nom;
   String _prenom;
   String _phone;
-  List<Vehicule>_list_vehicles ;
+  List<Vehicule>_listVehicles;
+
   //photo
-  Location _location;
-  //Boite de reception
-  List<Groupe>_list_groupes ;
-  Historique _historique ;
-  bool _active;
+  Geolocator _location;
   double _vitesse;
+
+  //Boite de reception
+  List<Groupe>_list_groupes;
+  Historique _historique;
+  bool _active;
+
 
   //Auth
   final ServicesAuth _auth = ServicesAuth();
+
   //DB
   final Firestore _firestore = Firestore.instance;
+
   //*****************************************Constructors*********************************************************//
   //Creer un nouveau utilisateur
   Utilisateur.neww (String id, String email, String password, String nom,
@@ -39,8 +43,7 @@ class Utilisateur {
     this._active = true;
     this._historique = new Historique();
     this._list_groupes = new List<Groupe> ();
-    this._list_vehicles = new List<Vehicule>();
-    createUserDoc(this);
+    this._listVehicles = new List<Vehicule>();
   }
 
   //Creer un utilisateur a partir d'un doc Firestore
@@ -51,9 +54,9 @@ class Utilisateur {
 
   //*********************************************Methods*****************************************************//
   //Create a new User doc of the user
-  Future createUserDoc(Utilisateur user) async
+  Future<void> createUserDoc(Utilisateur user) async
   {
-    Location location = Location();
+    Geolocator location = Geolocator();
     try {
       await _firestore.collection("users")
           .document(user.getId())
@@ -65,135 +68,231 @@ class Utilisateur {
         //String _username;
         'Password': user.getPassword(),
         'Phone': '',
-        'Vehicules' : '', //*****
         'PhotoURL': '', //*****
-        'Location': location,
-        'BoiteReception' : '', //*****
-        'Groupe' : '', //*****
-        'Historique' : '', //*****
+        //'Location': location,
+        //'Historique': '', //*****
+        //'BoiteReception': '', //*****
+        //'Groupe': '', //*****
         'Active': true,
         'Vitesse': 0.0,
+      })
+          .then((_) {
+        print('done');
+      })
+          .catchError((error) {
+            print('something went wrong i create user doc');
       });
     }
     catch (e) {
       print(e.toString());
     }
   }
+    Future<void> updateLocation() {
 
-  //Getter and setters
-  String getId() {
-    return this._id;
-  }
-
-  String getNom() {
-    return this._nom;
-  }
-
-  String getPrenom() {
-    return this._prenom;
-  }
-
-  String getPhone() {
-    return this._phone;
-  }
-
-  String getEmail() {
-    return this._email;
-  }
-
-  String getPassword() {
-    return this._password;
-  }
-
-  //Change user's password
-  Future <void> setPassword(String oldPassword, String newPassword) async
-  {
-    if (this._password == oldPassword) {
-      await _auth.changePassword(newPassword);
-      this._password = newPassword;
     }
-    else {
-      print('Wrong password');
+    Future<void> getLocation() {
+
     }
-  }
+    Future<void> addVehicule(Vehicule v) {
+      _firestore.collection('users').document(_id).collection('vehicules')
+          .document(v.matricule).setData({
+        'Matricule': v.matricule,
+        'Model': v.model,
+        'Color': v.color,
+      })
+          .then((_) {
+        this._listVehicles.add(v);
+        print('vehicule added');
+      }).catchError((error) {
+        print('Couldn\'t add vehicule' + error.toString());
+      });
+    }
+    Future<void> removeVehicule(Vehicule v) {
+      _firestore.collection('users').document(_id).collection('vehicules')
+          .document(v.matricule).delete()
+          .then((_) {
+        this._listVehicles.remove(v);
+        print('Vehicule removed');
+      }).catchError((error) {
+        print('Couldn\'t remove vehicule' + error.toString());
+      });
+    }
+    Future<void> addPhoto(String photoURL) {
 
-  //Reser the password
-  Future<void> recupererMotPasse() async
-  {
-    await _auth.resetPassword(this._email);
-  }
+    }
 
-  void rejoindreGroupe(Groupe g) {//???
-    _list_groupes.add(g);
-  }
+    Future<void> joinGroupe(String gid) {
 
-  void quitterGroupe(Groupe g) {
-    _list_groupes.remove(g);
-  }
+    }
+    Future<void> leaveGroupe(String gid) {
 
-  void supprimerHistorique() { ///////////////////////////////////////////////////////////////////
-      _historique.supprimer();
-  }
+    }
+    Future<void> addToHistorique(TimePlace location) {
 
-  void supprimerHistoriqueGroupe(String groupe) {/////////////////////////////////////////////////
-    _historique.supprimerGroupe(groupe);
-  }
-  void setPhone (String phone) {
-        this._phone = phone;
+    }
+
+    Future<void> setLocation() {
+
+    }
+
+    //Change user's password
+    Future <void> setEmail(String email) async
+    {
+      await _auth.changeEmail(email);
+      _firestore.collection("users").document(this._id).updateData(
+          {
+            "Email": email,
+          }
+      ).then((result) {
+        print("Email changed");
+        this._email = email;
+      }).catchError((error) {
+        print("Error" + error.toString());
+      });
+    }
+
+    //Change user's password
+    Future <void> setPassword(String oldPassword, String newPassword) async
+    {
+      if (this._password == oldPassword) {
+        await _auth.changePassword(newPassword);
         _firestore.collection("users").document(this._id).updateData(
             {
-              "Phone": phone,
+              "Password": newPassword,
             }
         ).then((result) {
-          print("phone number changed");
-        }).catchError((onError) {
-          print("Error");
+          print("password changed");
+          this._password = newPassword;
+        }).catchError((error) {
+          print("Error" + error.toString());
         });
-  }
-  //Change active status
-  void changeActiveStatus() {
-    _active = !_active;
-    _firestore.collection("users").document(this._id).updateData(
-        {
-          "Active": _active,
-        }
-    ).then((result) {
-      print("Status changed");
-    }).catchError((onError) {
-      print("Error");
-    });
-  }
-  //Change display name
-  void setNomPrenom(String nom, String prenom) {
-    if (nom != null) {
-      this._nom = nom;
+      }
+      else {
+        print('Wrong password');
+      }
+    }
+
+    //Reser the password
+    Future<void> recupererMotPasse() async
+    {
+      await _auth.resetPassword(this._email);
+    }
+
+    void rejoindreGroupe(Groupe g) {
+      //???
+      _list_groupes.add(g);
+    }
+
+    void quitterGroupe(Groupe g) {
+      _list_groupes.remove(g);
+    }
+
+    void supprimerHistorique() {
+      ///////////////////////////////////////////////////////////////////
+      _historique.supprimer();
+    }
+
+    void supprimerHistoriqueGroupe(String groupe) {
+      /////////////////////////////////////////////////
+      _historique.supprimerGroupe(groupe);
+    }
+
+    void setPhone(String phone) {
       _firestore.collection("users").document(this._id).updateData(
           {
-            "Nom": nom,
+            "Phone": phone,
           }
       ).then((result) {
-        print("Nom change");
-      }).catchError((onError) {
-        print("Error");
+        this._phone = phone;
+        print("phone number changed");
+      }).catchError((error) {
+        print("Error" + error.toString());
       });
     }
-    if (prenom != null) {
-      this._prenom = prenom;
+
+    //Change active status
+    void changeActiveStatus() {
       _firestore.collection("users").document(this._id).updateData(
           {
-            "Prenom": prenom,
+            "Active": _active,
           }
       ).then((result) {
-        print("Nom change");
-      }).catchError((onError) {
-        print("Error");
+        _active = !_active;
+        print("Status changed");
+      }).catchError((error) {
+        print("Error" + error.toString());
       });
     }
-  }
+
+    //Change display name
+    void setNomPrenom(String nom, String prenom) {
+      if (nom != null) {
+        _firestore.collection("users").document(this._id).updateData(
+            {
+              "Nom": nom,
+            }
+        ).then((result) {
+          this._nom = nom;
+          print("Nom change");
+        }).catchError((error) {
+          print("Error" + error.toString());
+        });
+      }
+      if (prenom != null) {
+        _firestore.collection("users").document(this._id).updateData(
+            {
+              "Prenom": prenom,
+            }
+        ).then((result) {
+          this._prenom = prenom;
+          print("Nom change");
+        }).catchError((error) {
+          print("Error" + error.toString());
+        });
+      }
+    }
+
+//Getter
+    String getId() {
+      return this._id;
+    }
+
+    String getNom() {
+      return this._nom;
+    }
+
+    String getPrenom() {
+      return this._prenom;
+    }
+
+    String getPhone() {
+      return this._phone;
+    }
+
+    String getEmail() {
+      return this._email;
+    }
+
+    String getPassword() {
+      return this._password;
+    }
 }
 class Vehicule
 {
+  String matricule;
+  String model;
+  String color;
+  Vehicule(String matricule,String model,String color)
+  {
+    this.matricule = matricule;
+    this.model = model;
+    this.color = color;
+  }
+  @override
+  bool operator ==(Object other) => other is Vehicule && other.matricule == this.matricule;
 
+  @override
+  int get hashCode => matricule.hashCode;
 }
 
 

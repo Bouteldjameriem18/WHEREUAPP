@@ -1,9 +1,9 @@
-import 'package:location/location.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 
 class TimePlace {
-  Location _location;
+  Geolocator _location;
   DateTime _date;
 
 }

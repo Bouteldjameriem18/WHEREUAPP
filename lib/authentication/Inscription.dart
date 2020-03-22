@@ -10,7 +10,7 @@ class Inscription extends StatefulWidget {
 class _InscriptionState extends State<Inscription> {
   String nom = 'Benhamadi' ;
   String prenom = 'Yasmine';
-  String email = 'iy_benhamadi@gmail.com';
+  String email = 'yasminebenhamadi0555@gmail.com';
   String password = 'HeLlO123';
   final ServicesAuth _authService = ServicesAuth();
 

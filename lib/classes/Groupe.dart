@@ -1,11 +1,11 @@
-import 'package:location/location.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:projet_2cp/classes/Discussion.dart';
 import 'package:projet_2cp/classes/Utilisateur.dart';
 
 class Groupe{
   String _nom;
   String _id;
-  Location _lieuArrive;
+  Geolocator _lieuArrive;
   DateTime _dateDepart;
   Discussion _discussion;
   Utilisateur _admin;
