@@ -49,7 +49,7 @@ class ServicesAuth {
       {
         utilisateur.addVehicule(Vehicule('Great','Beaitiful','wonderful'));
         utilisateur.setPhone('0676370021');
-        print('Mamamiaaaaaa');
+
 
       }
       return utilisateur; //Return an 'Utilisateur' object
